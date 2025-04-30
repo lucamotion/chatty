@@ -26,13 +26,20 @@ export class Bot implements IBot {
 
     this.commandsCollection = commandsCollection;
 
+    const wrapHandler =
+      <T extends Message | Interaction>(fn: (arg: T) => Promise<void>) =>
+      (arg: T) =>
+        fn(arg).catch(console.error);
+
     this.client.on("ready", () => console.log("Signed in"));
-    this.client.on("messageCreate", async (message) => {
-      await this.onMessageCreate(message);
-    });
-    this.client.on("interactionCreate", async (interaction) => {
-      await this.onInteractionCreate(interaction);
-    });
+    this.client.on(
+      "messageCreate",
+      wrapHandler(this.onMessageCreate.bind(this)),
+    );
+    this.client.on(
+      "interactionCreate",
+      wrapHandler(this.onInteractionCreate.bind(this)),
+    );
   }
 
   async start() {
