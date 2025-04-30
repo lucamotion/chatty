@@ -51,7 +51,7 @@ export class StatsCommand implements ICommand {
 
   private makeComponents(
     targetUser: User,
-    stats: (DBUser & { position: number }) | null,
+    stats: (DBUser & { position: number }) | undefined,
   ) {
     const container = new ContainerBuilder();
 

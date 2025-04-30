@@ -38,7 +38,7 @@ export interface IUserRepository {
   getUserStats(
     userId: string,
     guildId: string,
-  ): Promise<Result<(User & { position: number }) | null, ChattyError>>;
+  ): Promise<Result<(User & { position: number }) | undefined, ChattyError>>;
   getTopUsers(
     guildId: string,
     limit: number,

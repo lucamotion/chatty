@@ -126,7 +126,7 @@ describe("StatsCommand", () => {
     it("should return components when user is not found", async () => {
       const mockInteraction = createMockInteraction();
 
-      mockUserRepository.getUserStats.mockResolvedValue(ok(null));
+      mockUserRepository.getUserStats.mockResolvedValue(ok(undefined));
       const result = await statsCommand.execute(mockInteraction);
 
       expect(result.isOk()).toBe(true);

@@ -52,7 +52,7 @@ export class UserRepository implements IUserRepository {
       }
 
       if (!user) {
-        return ok(null);
+        return ok(undefined);
       }
 
       return ok({ ...user, position });
