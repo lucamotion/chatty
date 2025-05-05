@@ -109,9 +109,10 @@ describe("Bot", () => {
 
     it("should call trackMessage on messageCreate event", async () => {
       const message = {
-        author: { id: "123", username: "user", bot: false },
-        guild: { id: "456", name: "guild" },
-        channel: { id: "789" },
+        guild: { id: "123", name: "guild" },
+        channel: { id: "456" },
+        author: { id: "789", username: "user", bot: false },
+        content: "",
       } as unknown as Message;
       const onSpy = vi.spyOn(mockUserRepository, "trackMessage");
 

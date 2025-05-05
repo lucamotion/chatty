@@ -22,7 +22,7 @@ model ActivityBucket {
   hour      Int      @map("hour")
   updatedAt DateTime @updatedAt() @map("updated_at") @db.Timestamptz()
 
-  counter Int @default(0)
+  counter Int @default(0) @map("counter")
 
   @@id([guildId, channelId, userId, date, hour])
   @@index(guildId)
@@ -31,4 +31,20 @@ model ActivityBucket {
   @@index(date)
   @@index(hour)
   @@map("activity_bucket")
+}
+
+model EmojiBucket {
+  guildId   String @map("guild_id")
+  channelId String @map("channel_id")
+  userId    String @map("user_id")
+  emoji     String @map("emoji")
+
+  counter Int @default(0) @map("counter")
+
+  @@id([guildId, channelId, userId, emoji])
+  @@index(guildId)
+  @@index(channelId)
+  @@index(userId)
+  @@index(emoji)
+  @@map("emoji_bucket")
 }

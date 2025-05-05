@@ -35,8 +35,8 @@ export class StatsCommand implements ICommand {
       interaction.options.get("user")?.user || interaction.user;
 
     const stats = await this.userRepository.getUserStats(
-      targetUser.id,
       interaction.guild!.id,
+      targetUser.id,
     );
 
     if (stats.isErr()) {

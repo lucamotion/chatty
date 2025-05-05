@@ -92,8 +92,8 @@ describe("StatsCommand", () => {
 
       expect(result.isOk()).toBe(true);
       expect(mockUserRepository.getUserStats).toHaveBeenCalledWith(
-        "123",
         "321",
+        "123",
       );
     });
 
@@ -105,8 +105,8 @@ describe("StatsCommand", () => {
 
       expect(result.isOk()).toBe(true);
       expect(mockUserRepository.getUserStats).toHaveBeenCalledWith(
-        "987",
         "321",
+        "987",
       );
     });
 
@@ -118,8 +118,8 @@ describe("StatsCommand", () => {
 
       expect(result.isErr()).toBe(true);
       expect(mockUserRepository.getUserStats).toHaveBeenCalledWith(
-        "987",
         "321",
+        "987",
       );
     });
   });
@@ -133,8 +133,8 @@ describe("StatsCommand", () => {
 
       expect(result.isOk()).toBe(true);
       expect(mockUserRepository.getUserStats).toHaveBeenCalledWith(
-        "123",
         "321",
+        "123",
       );
       expect(result._unsafeUnwrap()).toEqual({
         components: [

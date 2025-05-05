@@ -1,4 +1,5 @@
 import { Client, Collection, Interaction, Message, Routes } from "discord.js";
+import emojiRegex from "emoji-regex";
 import type { IBot, ICommand, IUserRepository } from "./types/interfaces.js";
 
 export class Bot implements IBot {
@@ -63,10 +64,61 @@ export class Bot implements IBot {
     }
 
     await this.userRepository.trackMessage(
-      message.author.id,
       message.guild.id,
       message.channel.id,
+      message.author.id,
     );
+
+    const unicodeEmojiMatches = message.content
+      .matchAll(emojiRegex())
+      .toArray();
+
+    if (unicodeEmojiMatches.length > 0) {
+      const emojiMap = new Map<string, number>();
+
+      for (const [match] of unicodeEmojiMatches) {
+        if (!emojiMap.get(match)) {
+          emojiMap.set(match, 1);
+        } else {
+          emojiMap.set(match, emojiMap.get(match)! + 1);
+        }
+      }
+
+      for (const [emoji, count] of emojiMap.entries()) {
+        await this.userRepository.trackEmojis(
+          message.guild.id,
+          message.channel.id,
+          message.author.id,
+          emoji,
+          count,
+        );
+      }
+    }
+
+    const customEmojiMatches =
+      message.content.match(/(<a?):\w+:(\d{17,19}>)/g) || [];
+
+    if (customEmojiMatches.length > 0) {
+      const emojiMap = new Map<string, number>();
+
+      for (const match of customEmojiMatches) {
+        if (!emojiMap.get(match)) {
+          emojiMap.set(match, 1);
+        } else {
+          emojiMap.set(match, emojiMap.get(match)! + 1);
+        }
+      }
+
+      for (const [emoji, count] of emojiMap.entries()) {
+        await this.userRepository.trackEmojis(
+          message.guild.id,
+          message.channel.id,
+          message.author.id,
+          emoji,
+          count,
+        );
+      }
+    }
   }
 
   async onInteractionCreate(interaction: Interaction) {

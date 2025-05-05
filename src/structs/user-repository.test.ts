@@ -40,7 +40,7 @@ describe("UserRepository", () => {
       _sum: { counter: 123 },
     });
 
-    const result = await userRepository.getUserStats("1", "123");
+    const result = await userRepository.getUserStats("123", "1");
 
     expect(result.isOk()).toBe(true);
     expect(result._unsafeUnwrap()).toEqual(mockUser);

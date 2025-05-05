@@ -102,9 +102,9 @@ export class GraphCommand implements ICommand {
     }
 
     const userHourlyResult = await this.userRepository.getUserHourlyActivity(
-      targetUser.id,
       interaction.guild!.id,
       channel?.id,
+      targetUser.id,
       timePeriod,
     );
 

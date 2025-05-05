@@ -32,13 +32,13 @@ export interface ICommand {
 
 export interface IUserRepository {
   trackMessage(
-    userId: string,
     guildId: string,
     channelId: string,
+    userId: string,
   ): Promise<Result<void, ChattyError>>;
   getUserStats(
-    userId: string,
     guildId: string,
+    userId: string,
   ): Promise<
     Result<{ count: number; lastSeen?: Date } | undefined, ChattyError>
   >;
@@ -46,9 +46,9 @@ export interface IUserRepository {
     guildId: string,
   ): Promise<Result<Array<{ count: number; userId: string }>, ChattyError>>;
   getUserHourlyActivity(
-    userId: string,
     guildId: string,
     channelId: string | undefined,
+    userId: string,
     period: "week" | "month" | "year" | "alltime",
   ): Promise<Result<Array<{ hour: number; counter: number }>, ChattyError>>;
   getGuildHourlyActivity(
@@ -56,6 +56,19 @@ export interface IUserRepository {
     channelId: string | undefined,
     period: "week" | "month" | "year" | "alltime",
   ): Promise<Result<Array<{ hour: number; counter: number }>, ChattyError>>;
+
+  trackEmojis(
+    guildId: string,
+    channelId: string,
+    userId: string,
+    emoji: string,
+    count: number,
+  ): Promise<Result<void, ChattyError>>;
+  getTopEmojis(
+    guildId: string,
+    channelId?: string,
+    userId?: string,
+  ): Promise<Result<Array<{ count: number; emoji: string }>, ChattyError>>;
 }
 
 export interface IPrismaClientProvider {

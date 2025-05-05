@@ -4,6 +4,7 @@ import utc from "dayjs/plugin/utc.js";
 import { Client, GatewayIntentBits } from "discord.js";
 import "dotenv/config";
 import { Bot } from "./bot.js";
+import { EmojiCommand } from "./commands/emoji.js";
 import { GraphCommand } from "./commands/graph.js";
 import { LeaderboardCommand } from "./commands/leaderboard.js";
 import { StatsCommand } from "./commands/stats.js";
@@ -12,7 +13,11 @@ import { PrismaClientProvider } from "./structs/database.js";
 import { UserRepository } from "./structs/user-repository.js";
 
 const client = new Client({
-  intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages],
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.MessageContent,
+  ],
 });
 
 const prisma = new PrismaClientProvider();
@@ -24,6 +29,7 @@ const bot = new Bot(
     new StatsCommand(userRepository),
     new LeaderboardCommand(userRepository, client),
     new GraphCommand(userRepository),
+    new EmojiCommand(userRepository),
   ],
   userRepository,
 );

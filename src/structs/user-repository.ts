@@ -14,7 +14,7 @@ export class UserRepository implements IUserRepository {
     this.prisma = prisma;
   }
 
-  async trackMessage(userId: string, guildId: string, channelId: string) {
+  async trackMessage(guildId: string, channelId: string, userId: string) {
     const database = this.prisma.getClient();
 
     try {
@@ -48,7 +48,7 @@ export class UserRepository implements IUserRepository {
     }
   }
 
-  async getUserStats(userId: string, guildId: string) {
+  async getUserStats(guildId: string, userId: string) {
     const database = this.prisma.getClient();
 
     try {
@@ -94,9 +94,9 @@ export class UserRepository implements IUserRepository {
   }
 
   async getUserHourlyActivity(
-    userId: string,
     guildId: string,
-    channelId?: string,
+    channelId: string | undefined,
+    userId: string,
     period: "week" | "month" | "year" | "alltime" = "alltime",
   ) {
     const database = this.prisma.getClient();
@@ -199,6 +199,55 @@ export class UserRepository implements IUserRepository {
         }));
 
       return ok(topUsers);
+    } catch (e) {
+      return err(new ChattyError(e));
+    }
+  }
+
+  async trackEmojis(
+    guildId: string,
+    channelId: string,
+    userId: string,
+    emoji: string,
+    count: number,
+  ) {
+    const database = this.prisma.getClient();
+
+    try {
+      await database.emojiBucket.upsert({
+        where: {
+          guildId_channelId_userId_emoji: { userId, guildId, channelId, emoji },
+        },
+        update: { counter: { increment: count } },
+        create: { userId, guildId, channelId, emoji, counter: count },
+      });
+
+      return ok();
+    } catch (e) {
+      return err(new ChattyError(e));
+    }
+  }
+
+  async getTopEmojis(guildId: string, channelId?: string, userId?: string) {
+    const database = this.prisma.getClient();
+
+    try {
+      const rawTopEmojis = await database.emojiBucket.groupBy({
+        where: { guildId, userId, channelId },
+        by: ["emoji"],
+        _sum: { counter: true },
+        orderBy: { _sum: { counter: "desc" } },
+        take: 20,
+      });
+
+      const topEmojis = rawTopEmojis
+        .filter(({ _sum: counter }) => counter !== null)
+        .map(({ _sum: { counter }, emoji }) => ({
+          count: counter!,
+          emoji,
+        }));
+
+      return ok(topEmojis);
     } catch (e) {
       return err(new ChattyError(e));
     }
