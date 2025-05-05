@@ -20,6 +20,7 @@ vi.mock("discord.js", async (importOriginal) => {
     })),
     Routes: {
       applicationCommands: vi.fn(),
+      applicationGuildCommands: vi.fn(),
     },
   };
 });

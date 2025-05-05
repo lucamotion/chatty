@@ -1,4 +1,6 @@
+import dayjs from "dayjs";
 import { err, ok } from "neverthrow";
+import { Prisma } from "../generated/prisma/client.js";
 import type {
   IPrismaClientProvider,
   IUserRepository,
@@ -12,22 +14,35 @@ export class UserRepository implements IUserRepository {
     this.prisma = prisma;
   }
 
-  async trackMessage(
-    userId: string,
-    username: string,
-    guildId: string,
-    guildName: string,
-  ) {
+  async trackMessage(userId: string, guildId: string, channelId: string) {
     const database = this.prisma.getClient();
 
     try {
-      const user = await database.user.upsert({
-        where: { id_guildId: { id: userId, guildId } },
-        update: { username, messages: { increment: 1 }, lastSeen: new Date() },
-        create: { id: userId, username, guildId, guildName, messages: 1 },
+      const date = dayjs().utc().startOf("day").toDate();
+      const hour = dayjs().utc().hour();
+
+      await database.activityBucket.upsert({
+        where: {
+          guildId_channelId_userId_date_hour: {
+            guildId,
+            channelId,
+            userId,
+            date,
+            hour,
+          },
+        },
+        update: { counter: { increment: 1 } },
+        create: {
+          guildId,
+          channelId,
+          userId,
+          date,
+          hour,
+          counter: 1,
+        },
       });
 
-      return ok(user);
+      return ok();
     } catch (e) {
       return err(new ChattyError(e));
     }
@@ -37,39 +52,151 @@ export class UserRepository implements IUserRepository {
     const database = this.prisma.getClient();
 
     try {
-      const user = await database.user.findFirst({
-        where: { id: userId, guildId },
+      const {
+        _sum: { counter: messageCountInGuild },
+      } = await database.activityBucket.aggregate({
+        _sum: { counter: true },
+        where: { guildId, userId },
       });
 
-      let position: number = -1;
+      const lastSeen = await database.activityBucket.findFirst({
+        where: { guildId, userId },
+        orderBy: { updatedAt: "desc" },
+        take: 1,
+        select: { updatedAt: true },
+      });
 
-      if (user) {
-        const userCount = await database.user.count({
-          where: { guildId, messages: { gt: user.messages } },
-        });
+      // const user = await database.user.findFirst({
+      //   where: { id: userId, guildId },
+      // });
 
-        position = userCount + 1;
-      }
+      // let position: number = -1;
 
-      if (!user) {
+      // if (user) {
+      //   const userCount = await database.user.count({
+      //     where: { guildId, messages: { gt: user.messages } },
+      //   });
+
+      //   position = userCount + 1;
+      // }
+
+      if (messageCountInGuild === null) {
         return ok(undefined);
       }
 
-      return ok({ ...user, position });
+      return ok({
+        count: messageCountInGuild,
+        lastSeen: lastSeen ? lastSeen.updatedAt : undefined,
+      });
     } catch (e) {
       return err(new ChattyError(e));
     }
   }
 
-  async getTopUsers(guildId: string, limit: number) {
+  async getUserHourlyActivity(
+    userId: string,
+    guildId: string,
+    channelId?: string,
+    period: "week" | "month" | "year" | "alltime" = "alltime",
+  ) {
+    const database = this.prisma.getClient();
+
+    let periodFilter: Prisma.DateTimeFilter<"ActivityBucket"> | undefined =
+      undefined;
+
+    if (period === "week") {
+      periodFilter = {
+        gte: dayjs.utc().startOf("day").subtract(7, "days").toDate(),
+      };
+    } else if (period === "month") {
+      periodFilter = {
+        gte: dayjs.utc().startOf("day").subtract(1, "month").toDate(),
+      };
+    } else if (period === "year") {
+      periodFilter = {
+        gte: dayjs.utc().startOf("day").subtract(1, "year").toDate(),
+      };
+    }
+
+    try {
+      const rawHours = await database.activityBucket.groupBy({
+        where: { guildId, channelId, userId, date: periodFilter },
+        by: ["hour"],
+        _sum: { counter: true },
+        orderBy: { hour: "asc" },
+      });
+
+      const hours = rawHours.map((activity) => ({
+        hour: activity.hour,
+        counter: activity._sum.counter!,
+      }));
+
+      return ok(hours);
+    } catch (e) {
+      return err(new ChattyError(e));
+    }
+  }
+
+  async getGuildHourlyActivity(
+    guildId: string,
+    channelId?: string,
+    period: "week" | "month" | "year" | "alltime" = "alltime",
+  ) {
+    const database = this.prisma.getClient();
+
+    let periodFilter: Prisma.DateTimeFilter<"ActivityBucket"> | undefined =
+      undefined;
+
+    if (period === "week") {
+      periodFilter = {
+        gte: dayjs.utc().startOf("day").subtract(7, "days").toDate(),
+      };
+    } else if (period === "month") {
+      periodFilter = {
+        gte: dayjs.utc().startOf("day").subtract(1, "month").toDate(),
+      };
+    } else if (period === "year") {
+      periodFilter = {
+        gte: dayjs.utc().startOf("day").subtract(1, "year").toDate(),
+      };
+    }
+
+    try {
+      const rawHours = await database.activityBucket.groupBy({
+        where: { guildId, channelId, date: periodFilter },
+        by: ["hour"],
+        _sum: { counter: true },
+        orderBy: { hour: "asc" },
+      });
+
+      const hours = rawHours.map((activity) => ({
+        hour: activity.hour,
+        counter: activity._sum.counter!,
+      }));
+
+      return ok(hours);
+    } catch (e) {
+      return err(new ChattyError(e));
+    }
+  }
+
+  async getTopUsers(guildId: string) {
     const database = this.prisma.getClient();
 
     try {
-      const topUsers = await database.user.findMany({
+      const rawTopUsers = await database.activityBucket.groupBy({
         where: { guildId },
-        orderBy: { messages: "desc" },
-        take: limit,
+        by: ["userId"],
+        _sum: { counter: true },
+        orderBy: { _sum: { counter: "desc" } },
       });
+
+      const topUsers = rawTopUsers
+        .filter(({ _sum: counter }) => counter !== null)
+        .map(({ _sum: { counter }, userId }) => ({
+          count: counter!,
+          userId,
+        }));
 
       return ok(topUsers);
     } catch (e) {

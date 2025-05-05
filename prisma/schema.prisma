@@ -14,14 +14,21 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id        String   @id @map("user_id")
-  username  String   @map("username")
+model ActivityBucket {
   guildId   String   @map("guild_id")
-  guildName String   @map("guild_name")
-  messages  Int      @default(0) @map("messages")
-  lastSeen  DateTime @default(now()) @map("last_seen")
+  channelId String   @map("channel_id")
+  userId    String   @map("user_id")
+  date      DateTime @map("date") @db.Date
+  hour      Int      @map("hour")
+  updatedAt DateTime @updatedAt() @map("updated_at") @db.Timestamptz()
 
-  @@unique([id, guildId])
-  @@map("user")
+  counter Int @default(0)
+
+  @@id([guildId, channelId, userId, date, hour])
+  @@index(guildId)
+  @@index(channelId)
+  @@index(userId)
+  @@index(date)
+  @@index(hour)
+  @@map("activity_bucket")
 }

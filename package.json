@@ -26,9 +26,13 @@
   },
   "dependencies": {
     "@prisma/client": "6.6.0",
+    "chart.js": "4.4.9",
+    "chartjs-plugin-datalabels": "2.2.0",
+    "dayjs": "1.11.13",
     "discord.js": "14.19.1",
     "dotenv": "16.5.0",
     "neverthrow": "8.2.0",
-    "rimraf": "6.0.1"
+    "rimraf": "6.0.1",
+    "skia-canvas": "2.0.2"
   }
 }

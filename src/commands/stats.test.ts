@@ -16,6 +16,8 @@ class MockUserRepository implements IUserRepository {
   trackMessage = vi.fn();
   getUserStats = vi.fn();
   getTopUsers = vi.fn();
+  getGuildHourlyActivity = vi.fn();
+  getUserHourlyActivity = vi.fn();
 }
 
 const createMockInteraction = () => {
@@ -157,15 +159,7 @@ describe("StatsCommand", () => {
     it("should return components when user is found", async () => {
       const mockInteraction = createMockInteraction();
       const mockDate = new Date("2023-01-01T12:00:00Z");
-      const mockUser = {
-        id: "123",
-        username: "User1",
-        guildName: "guild",
-        messages: 100,
-        commands: 50,
-        lastSeen: mockDate,
-        position: 1,
-      };
+      const mockUser = { count: 100, lastSeen: mockDate };
 
       mockUserRepository.getUserStats.mockResolvedValue(ok(mockUser));
       const result = await statsCommand.execute(mockInteraction);
@@ -183,7 +177,7 @@ describe("StatsCommand", () => {
               )
               .addTextDisplayComponents(
                 new TextDisplayBuilder().setContent(
-                  `**100** messages in \`guild\` **(#1)**` +
+                  `**100** messages in \`guild\`` +
                     `\nLast seen **${time(mockDate, TimestampStyles.RelativeTime)}**`,
                 ),
               ),
@@ -195,15 +189,7 @@ describe("StatsCommand", () => {
     it("should format correctly when only one message", async () => {
       const mockInteraction = createMockInteraction();
       const mockDate = new Date("2023-01-01T12:00:00Z");
-      const mockUser = {
-        id: "123",
-        username: "User1",
-        guildName: "guild",
-        messages: 1,
-        commands: 50,
-        lastSeen: mockDate,
-        position: 1,
-      };
+      const mockUser = { count: 1, lastSeen: mockDate };
 
       mockUserRepository.getUserStats.mockResolvedValue(ok(mockUser));
       const result = await statsCommand.execute(mockInteraction);
@@ -221,7 +207,7 @@ describe("StatsCommand", () => {
               )
               .addTextDisplayComponents(
                 new TextDisplayBuilder().setContent(
-                  `**1** message in \`guild\` **(#1)**` +
+                  `**1** message in \`guild\`` +
                     `\nLast seen **${time(mockDate, TimestampStyles.RelativeTime)}**`,
                 ),
               ),

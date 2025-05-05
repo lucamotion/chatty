@@ -1,4 +1,5 @@
 import {
+  Client,
   CommandInteraction,
   ContainerBuilder,
   SectionBuilder,
@@ -6,7 +7,7 @@ import {
   ThumbnailBuilder,
 } from "discord.js";
 import { err, ok } from "neverthrow";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, Mock, vi } from "vitest";
 import { IUserRepository } from "../types/interfaces.js";
 import { LeaderboardCommand } from "./leaderboard.js";
 
@@ -14,6 +15,8 @@ class MockUserRepository implements IUserRepository {
   trackMessage = vi.fn();
   getUserStats = vi.fn();
   getTopUsers = vi.fn();
+  getGuildHourlyActivity = vi.fn();
+  getUserHourlyActivity = vi.fn();
 }
 
 const createMockInteraction = () => {
@@ -36,10 +39,28 @@ const createMockInteraction = () => {
 describe("LeaderboardCommand", () => {
   let leaderboardCommand: LeaderboardCommand;
   let mockUserRepository: MockUserRepository;
+  let mockClient: {
+    on: Mock;
+    login: Mock;
+    rest: { put: Mock };
+    user: { id: string };
+    users: { fetch: Mock };
+  };
 
   beforeEach(() => {
+    mockClient = {
+      on: vi.fn(),
+      login: vi.fn(),
+      rest: { put: vi.fn() },
+      user: { id: "123" },
+      users: { fetch: vi.fn() },
+    };
+
     mockUserRepository = new MockUserRepository();
-    leaderboardCommand = new LeaderboardCommand(mockUserRepository);
+    leaderboardCommand = new LeaderboardCommand(
+      mockUserRepository,
+      mockClient as unknown as Client,
+    );
   });
 
   afterEach(() => {
@@ -75,20 +96,8 @@ describe("LeaderboardCommand", () => {
     it("should create components with user data when users are found", async () => {
       const mockInteraction = createMockInteraction();
       const mockUsers = [
-        {
-          id: "1",
-          username: "User1",
-          messages: 100,
-          commands: 50,
-          lastSeen: new Date(),
-        },
-        {
-          id: "2",
-          username: "User2",
-          messages: 90,
-          commands: 40,
-          lastSeen: new Date(),
-        },
+        { userId: "1", count: 100 },
+        { userId: "2", count: 90 },
       ];
       mockUserRepository.getTopUsers.mockResolvedValue(ok(mockUsers));
 
@@ -105,30 +114,18 @@ describe("LeaderboardCommand", () => {
       const result = await leaderboardCommand.execute(mockInteraction);
 
       expect(result.isErr()).toBe(true);
-      expect(mockUserRepository.getTopUsers).toHaveBeenCalledWith("321", 10);
+      expect(mockUserRepository.getTopUsers).toHaveBeenCalledWith("321");
     });
   });
 
   describe("integration", () => {
     it("should format the embed with proper data for each user", async () => {
       const mockInteraction = createMockInteraction();
-      const mockDate = new Date("2023-01-01T12:00:00Z");
       const mockUsers = [
-        {
-          id: "1",
-          username: "User1",
-          messages: 100,
-          commands: 50,
-          lastSeen: mockDate,
-        },
-        {
-          id: "2",
-          username: "User2",
-          messages: 90,
-          commands: 40,
-          lastSeen: mockDate,
-        },
+        { userId: "1", count: 100 },
+        { id: "2", count: 90 },
       ];
+      mockClient.users.fetch.mockResolvedValue({ username: "User" });
       mockUserRepository.getTopUsers.mockResolvedValue(ok(mockUsers));
 
       const result = await leaderboardCommand.execute(mockInteraction);
@@ -143,8 +140,8 @@ describe("LeaderboardCommand", () => {
               }),
               new TextDisplayBuilder({
                 content:
-                  "` #1 ` User1 - **100** messages" +
-                  "\n` #2 ` User2 - **90** messages",
+                  "` #1 ` User - **100** messages" +
+                  "\n` #2 ` User - **90** messages",
               }),
             )
             .setThumbnailAccessory(
@@ -158,11 +155,10 @@ describe("LeaderboardCommand", () => {
       const mockInteraction = createMockInteraction();
       const mockDate = new Date("2023-01-01T12:00:00Z");
       const mockUsers = [10, 9, 8, 7, 6, 5, 4, 3, 2, 1].map((index) => ({
-        id: index.toString(),
-        username: `User${index}`,
-        messages: index,
-        lastSeen: mockDate,
+        userId: index.toString(),
+        count: index,
       }));
+      mockClient.users.fetch.mockResolvedValue({ username: "User" });
       mockUserRepository.getTopUsers.mockResolvedValue(ok(mockUsers));
 
       const result = await leaderboardCommand.execute(mockInteraction);
@@ -177,16 +173,16 @@ describe("LeaderboardCommand", () => {
               }),
               new TextDisplayBuilder({
                 content:
-                  "`  #1 ` User10 - **10** messages" +
-                  "\n`  #2 ` User9 - **9** messages" +
-                  "\n`  #3 ` User8 - **8** messages" +
-                  "\n`  #4 ` User7 - **7** messages" +
-                  "\n`  #5 ` User6 - **6** messages" +
-                  "\n`  #6 ` User5 - **5** messages" +
-                  "\n`  #7 ` User4 - **4** messages" +
-                  "\n`  #8 ` User3 - **3** messages" +
-                  "\n`  #9 ` User2 - **2** messages" +
-                  "\n` #10 ` User1 - **1** message",
+                  "`  #1 ` User - **10** messages" +
+                  "\n`  #2 ` User - **9** messages" +
+                  "\n`  #3 ` User - **8** messages" +
+                  "\n`  #4 ` User - **7** messages" +
+                  "\n`  #5 ` User - **6** messages" +
+                  "\n`  #6 ` User - **5** messages" +
+                  "\n`  #7 ` User - **4** messages" +
+                  "\n`  #8 ` User - **3** messages" +
+                  "\n`  #9 ` User - **2** messages" +
+                  "\n` #10 ` User - **1** message",
               }),
             )
             .setThumbnailAccessory(

@@ -17,6 +17,8 @@ class MockUserRepository implements IUserRepository {
   trackMessage = vi.fn();
   getUserStats = vi.fn();
   getTopUsers = vi.fn();
+  getGuildHourlyActivity = vi.fn();
+  getUserHourlyActivity = vi.fn();
 }
 
 describe("Bot", () => {
@@ -108,13 +110,14 @@ describe("Bot", () => {
     it("should call trackMessage on messageCreate event", async () => {
       const message = {
         author: { id: "123", username: "user", bot: false },
-        guild: { id: "123", name: "guild" },
+        guild: { id: "456", name: "guild" },
+        channel: { id: "789" },
       } as unknown as Message;
       const onSpy = vi.spyOn(mockUserRepository, "trackMessage");
 
       await bot.onMessageCreate(message);
 
-      expect(onSpy).toHaveBeenCalledWith("123", "user", "123", "guild");
+      expect(onSpy).toHaveBeenCalledWith("123", "456", "789");
     });
   });
 

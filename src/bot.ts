@@ -46,7 +46,10 @@ export class Bot implements IBot {
     await this.client.login(this.token);
 
     await this.client.rest.put(
-      Routes.applicationCommands(this.client.user!.id),
+      Routes.applicationGuildCommands(
+        this.client.user!.id,
+        "768596255697272862",
+      ),
       { body: this.commands.map((command) => command.data.toJSON()) },
     );
   }
@@ -61,9 +64,8 @@ export class Bot implements IBot {
 
     await this.userRepository.trackMessage(
       message.author.id,
-      message.author.username,
       message.guild.id,
-      message.guild.name,
+      message.channel.id,
     );
   }
 
@@ -103,6 +105,7 @@ export class Bot implements IBot {
 
     await interaction.reply({
       components: result.value.components,
+      files: result.value.files,
       flags: 1 << 15,
     });
   }

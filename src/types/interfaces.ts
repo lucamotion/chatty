@@ -1,5 +1,6 @@
 import {
   APIMessageTopLevelComponent,
+  AttachmentBuilder,
   CommandInteraction,
   Interaction,
   JSONEncodable,
@@ -8,7 +9,7 @@ import {
   SlashCommandOptionsOnlyBuilder,
 } from "discord.js";
 import { Result } from "neverthrow";
-import { PrismaClient, User } from "../generated/prisma/index.js";
+import { PrismaClient } from "../generated/prisma/index.js";
 import { ChattyError } from "../structs/error.js";
 
 export interface IBot {
@@ -19,6 +20,7 @@ export interface IBot {
 
 export interface CommandResult {
   components: Array<JSONEncodable<APIMessageTopLevelComponent>>;
+  files?: Array<AttachmentBuilder>;
 }
 
 export interface ICommand {
@@ -31,18 +33,29 @@ export interface ICommand {
 export interface IUserRepository {
   trackMessage(
     userId: string,
-    username: string,
     guildId: string,
-    guildName: string,
-  ): Promise<Result<User, ChattyError>>;
+    channelId: string,
+  ): Promise<Result<void, ChattyError>>;
   getUserStats(
     userId: string,
     guildId: string,
-  ): Promise<Result<(User & { position: number }) | undefined, ChattyError>>;
+  ): Promise<
+    Result<{ count: number; lastSeen?: Date } | undefined, ChattyError>
+  >;
   getTopUsers(
     guildId: string,
-    limit: number,
-  ): Promise<Result<Array<User>, ChattyError>>;
+  ): Promise<Result<Array<{ count: number; userId: string }>, ChattyError>>;
+  getUserHourlyActivity(
+    userId: string,
+    guildId: string,
+    channelId: string | undefined,
+    period: "week" | "month" | "year" | "alltime",
+  ): Promise<Result<Array<{ hour: number; counter: number }>, ChattyError>>;
+  getGuildHourlyActivity(
+    guildId: string,
+    channelId: string | undefined,
+    period: "week" | "month" | "year" | "alltime",
+  ): Promise<Result<Array<{ hour: number; counter: number }>, ChattyError>>;
 }
 
 export interface IPrismaClientProvider {

@@ -14,6 +14,6 @@
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true
   },
-  "include": ["src", "types/vitest.d.ts", "*.test.ts"],
+  "include": ["src", "types/vitest.d.ts", "types/chart.js.d.ts", "*.test.ts"],
   "exclude": ["**/*.test.ts"]
 }

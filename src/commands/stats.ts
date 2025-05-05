@@ -1,5 +1,4 @@
 import {
-  bold,
   CommandInteraction,
   ContainerBuilder,
   SectionBuilder,
@@ -12,9 +11,8 @@ import {
   User,
 } from "discord.js";
 import { err, ok } from "neverthrow";
-import { User as DBUser } from "../generated/prisma/index.js";
-import type { ICommand, IUserRepository } from "../types/interfaces.js";
 
+import type { ICommand, IUserRepository } from "../types/interfaces.js";
 export class StatsCommand implements ICommand {
   public data: SlashCommandOptionsOnlyBuilder;
   private userRepository: IUserRepository;
@@ -45,13 +43,19 @@ export class StatsCommand implements ICommand {
       return err(stats.error);
     }
 
-    const components = this.makeComponents(targetUser, stats.value);
+    const components = this.makeComponents(
+      targetUser,
+      interaction.guild!.name,
+      stats.value,
+    );
+
     return ok({ components });
   }
 
   private makeComponents(
     targetUser: User,
-    stats: (DBUser & { position: number }) | undefined,
+    guildName: string,
+    stats: { count: number; lastSeen?: Date } | undefined,
   ) {
     const container = new ContainerBuilder();
 
@@ -70,16 +74,16 @@ export class StatsCommand implements ICommand {
         new TextDisplayBuilder().setContent("No messages recorded yet."),
       );
     } else {
-      let positionText = `(#${stats.position})`;
+      // let positionText = `(#${stats.position})`;
 
-      if (stats.position <= 10) {
-        positionText = bold(positionText);
-      }
+      // if (stats.position <= 10) {
+      //   positionText = bold(positionText);
+      // }
 
       section.addTextDisplayComponents(
         new TextDisplayBuilder().setContent(
-          `**${stats.messages}** message${stats.messages !== 1 ? "s" : ""} in \`${stats.guildName}\` ${positionText}` +
-            `\nLast seen **${time(stats.lastSeen, TimestampStyles.RelativeTime)}**`,
+          `**${stats.count}** message${stats.count !== 1 ? "s" : ""} in \`${guildName}\`` +
+            `\nLast seen **${stats.lastSeen ? time(stats.lastSeen, TimestampStyles.RelativeTime) : "Never"}**`,
         ),
       );
     }

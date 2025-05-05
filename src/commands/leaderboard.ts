@@ -1,4 +1,5 @@
 import {
+  Client,
   CommandInteraction,
   ContainerBuilder,
   Guild,
@@ -9,32 +10,32 @@ import {
   ThumbnailBuilder,
 } from "discord.js";
 import { err, ok } from "neverthrow";
-import { User } from "../generated/prisma/index.js";
 import type { ICommand, IUserRepository } from "../types/interfaces.js";
 
 export class LeaderboardCommand implements ICommand {
   public data: SlashCommandBuilder;
   private userRepository: IUserRepository;
+  private client: Client;
 
-  constructor(userRepository: IUserRepository) {
+  constructor(userRepository: IUserRepository, client: Client) {
     this.userRepository = userRepository;
     this.data = new SlashCommandBuilder()
       .setName("leaderboard")
       .setDescription(`Check your server's Chattiest users!`)
       .setContexts(InteractionContextType.Guild);
+    this.client = client;
   }
 
   async execute(interaction: CommandInteraction) {
     const leaderboardResult = await this.userRepository.getTopUsers(
       interaction.guild!.id,
-      10,
     );
 
     if (leaderboardResult.isErr()) {
       return err(leaderboardResult.error);
     }
 
-    const components = this.makeComponents(
+    const components = await this.makeComponents(
       leaderboardResult.value,
       interaction.guild!,
     );
@@ -42,7 +43,10 @@ export class LeaderboardCommand implements ICommand {
     return ok({ components });
   }
 
-  private makeComponents(leaderboard: Array<User>, guild: Guild) {
+  private async makeComponents(
+    leaderboard: Array<{ count: number; userId: string }>,
+    guild: Guild,
+  ) {
     const pad = leaderboard.length >= 10;
 
     const container = new ContainerBuilder();
@@ -58,15 +62,27 @@ export class LeaderboardCommand implements ICommand {
         ),
       );
     } else {
+      const entries = [];
+
+      for (const [index, user] of leaderboard.entries()) {
+        let username;
+
+        try {
+          const discordUser = await this.client.users.fetch(user.userId);
+          username = discordUser.username;
+        } catch {
+          username = "Unknown User";
+        }
+
+        entries.push(
+          `\` ${`#${index + 1}`.padStart(pad ? 3 : 2, " ")} \` ${
+            username
+          } - **${user.count}** message${user.count !== 1 ? "s" : ""}`,
+        );
+      }
+
       section.addTextDisplayComponents(
-        new TextDisplayBuilder().setContent(
-          leaderboard
-            .map(
-              (user, index) =>
-                `\` ${`#${index + 1}`.padStart(pad ? 3 : 2, " ")} \` ${user.username} - **${user.messages}** message${user.messages !== 1 ? "s" : ""}`,
-            )
-            .join("\n"),
-        ),
+        new TextDisplayBuilder().setContent(entries.join("\n")),
       );
     }
 
