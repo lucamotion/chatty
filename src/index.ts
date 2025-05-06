@@ -27,7 +27,7 @@ const bot = new Bot(
   process.env.DISCORD_BOT_TOKEN!,
   [
     new StatsCommand(userRepository),
-    new LeaderboardCommand(userRepository, client),
+    new LeaderboardCommand(userRepository),
     new GraphCommand(userRepository),
     new EmojiCommand(userRepository),
   ],

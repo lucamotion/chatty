@@ -159,6 +159,7 @@ export class Bot implements IBot {
       components: result.value.components,
       files: result.value.files,
       flags: 1 << 15,
+      allowedMentions: result.value.allowedMentions,
     });
   }
 }

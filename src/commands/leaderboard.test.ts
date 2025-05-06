@@ -1,5 +1,4 @@
 import {
-  Client,
   CommandInteraction,
   ContainerBuilder,
   SectionBuilder,
@@ -48,19 +47,8 @@ describe("LeaderboardCommand", () => {
   };
 
   beforeEach(() => {
-    mockClient = {
-      on: vi.fn(),
-      login: vi.fn(),
-      rest: { put: vi.fn() },
-      user: { id: "123" },
-      users: { fetch: vi.fn() },
-    };
-
     mockUserRepository = new MockUserRepository();
-    leaderboardCommand = new LeaderboardCommand(
-      mockUserRepository,
-      mockClient as unknown as Client,
-    );
+    leaderboardCommand = new LeaderboardCommand(mockUserRepository);
   });
 
   afterEach(() => {
@@ -125,7 +113,6 @@ describe("LeaderboardCommand", () => {
         { userId: "1", count: 100 },
         { id: "2", count: 90 },
       ];
-      mockClient.users.fetch.mockResolvedValue({ username: "User" });
       mockUserRepository.getTopUsers.mockResolvedValue(ok(mockUsers));
 
       const result = await leaderboardCommand.execute(mockInteraction);
@@ -153,12 +140,10 @@ describe("LeaderboardCommand", () => {
 
     it("should pad correctly with 10+ users", async () => {
       const mockInteraction = createMockInteraction();
-      const mockDate = new Date("2023-01-01T12:00:00Z");
       const mockUsers = [10, 9, 8, 7, 6, 5, 4, 3, 2, 1].map((index) => ({
         userId: index.toString(),
         count: index,
       }));
-      mockClient.users.fetch.mockResolvedValue({ username: "User" });
       mockUserRepository.getTopUsers.mockResolvedValue(ok(mockUsers));
 
       const result = await leaderboardCommand.execute(mockInteraction);

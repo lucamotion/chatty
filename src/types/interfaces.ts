@@ -5,6 +5,7 @@ import {
   Interaction,
   JSONEncodable,
   Message,
+  MessageMentionOptions,
   SlashCommandBuilder,
   SlashCommandOptionsOnlyBuilder,
 } from "discord.js";
@@ -21,6 +22,7 @@ export interface IBot {
 export interface CommandResult {
   components: Array<JSONEncodable<APIMessageTopLevelComponent>>;
   files?: Array<AttachmentBuilder>;
+  allowedMentions?: MessageMentionOptions;
 }
 
 export interface ICommand {
