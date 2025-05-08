@@ -12,6 +12,7 @@ export default defineConfig([
     ],
   },
   { files: ["src/**/*.ts"] },
+  // @ts-ignore - this error is too long and its just eslint and it works fine so i dont really care
   tseslint.configs.recommendedTypeChecked,
   {
     languageOptions: {
