@@ -48,3 +48,22 @@ model EmojiBucket {
   @@index(emoji)
   @@map("emoji_bucket")
 }
+
+model ReactionBucket {
+  guildId   String @map("guild_id")
+  channelId String @map("channel_id")
+  emoji     String @map("emoji")
+
+  reactorId String @map("reactor_id")
+  reacteeId String @map("reactee_id")
+
+  counter Int @default(0) @map("counter")
+
+  @@id([guildId, channelId, emoji, reactorId, reacteeId])
+  @@index(guildId)
+  @@index(channelId)
+  @@index(emoji)
+  @@index(reactorId)
+  @@index(reacteeId)
+  @@map("reaction_bucket")
+}

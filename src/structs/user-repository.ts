@@ -1,5 +1,5 @@
 import dayjs from "dayjs";
-import { err, ok } from "neverthrow";
+import { err, ok, Result } from "neverthrow";
 import { Prisma } from "../generated/prisma/client.js";
 import type {
   IPrismaClientProvider,
@@ -204,7 +204,7 @@ export class UserRepository implements IUserRepository {
     }
   }
 
-  async trackEmojis(
+  async trackEmoji(
     guildId: string,
     channelId: string,
     userId: string,
@@ -234,6 +234,65 @@ export class UserRepository implements IUserRepository {
     try {
       const rawTopEmojis = await database.emojiBucket.groupBy({
         where: { guildId, userId, channelId },
+        by: ["emoji"],
+        _sum: { counter: true },
+        orderBy: { _sum: { counter: "desc" } },
+        take: 20,
+      });
+
+      const topEmojis = rawTopEmojis
+        .filter(({ _sum: counter }) => counter !== null)
+        .map(({ _sum: { counter }, emoji }) => ({
+          count: counter!,
+          emoji,
+        }));
+
+      return ok(topEmojis);
+    } catch (e) {
+      return err(new ChattyError(e));
+    }
+  }
+
+  async trackReaction(
+    guildId: string,
+    channelId: string,
+    emoji: string,
+    reactorId: string,
+    reacteeId: string,
+  ): Promise<Result<void, ChattyError>> {
+    const database = this.prisma.getClient();
+
+    try {
+      await database.reactionBucket.upsert({
+        where: {
+          guildId_channelId_emoji_reactorId_reacteeId: {
+            guildId,
+            channelId,
+            emoji,
+            reactorId,
+            reacteeId,
+          },
+        },
+        update: { counter: { increment: 1 } },
+        create: { guildId, channelId, emoji, reactorId, reacteeId, counter: 1 },
+      });
+
+      return ok();
+    } catch (e) {
+      return err(new ChattyError(e));
+    }
+  }
+  async getTopReactions(
+    guildId: string,
+    channelId?: string,
+    reactorId?: string,
+    reacteeId?: string,
+  ) {
+    const database = this.prisma.getClient();
+
+    try {
+      const rawTopEmojis = await database.reactionBucket.groupBy({
+        where: { guildId, channelId, reactorId, reacteeId },
         by: ["emoji"],
         _sum: { counter: true },
         orderBy: { _sum: { counter: "desc" } },

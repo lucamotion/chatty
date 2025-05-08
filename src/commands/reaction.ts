@@ -18,62 +18,72 @@ import type { ICommand, IUserRepository } from "../types/interfaces.js";
 
 dayjs.extend(tz);
 
-export class EmojiCommand implements ICommand {
+export class ReactionCommand implements ICommand {
   public data: SlashCommandOptionsOnlyBuilder;
   private userRepository: IUserRepository;
 
   constructor(userRepository: IUserRepository) {
     this.userRepository = userRepository;
     this.data = new SlashCommandBuilder()
-      .setName("emoji")
-      .setDescription(`Check the most popular emojis`)
+      .setName("reaction")
+      .setDescription(`Check the most popular reactions`)
 
       .addUserOption((option) =>
         option
-          .setName("user")
-          .setDescription("User to check the emojis of")
+          .setName("reactor")
+          .setDescription("Check a user's most sent reactions")
+          .setRequired(false),
+      )
+      .addUserOption((option) =>
+        option
+          .setName("reactee")
+          .setDescription("Check a user's most received reactions")
           .setRequired(false),
       )
       .addChannelOption((option) =>
         option
           .setName("channel")
-          .setDescription("The channel to fetch emojis from")
+          .setDescription("The channel to fetch reactions from")
           .setRequired(false),
       );
   }
 
   async execute(interaction: CommandInteraction) {
-    const targetUser = interaction.options.get("user")?.user;
+    const reactor = interaction.options.get("reactor")?.user;
+    const reactee = interaction.options.get("reactee")?.user;
 
     const channel = interaction.options.get("channel")?.channel ?? undefined;
 
-    const topEmojisResult = await this.userRepository.getTopEmojis(
+    const topResult = await this.userRepository.getTopReactions(
       interaction.guild!.id,
       channel?.id,
-      targetUser?.id,
+      reactor?.id,
+      reactee?.id,
     );
 
-    if (topEmojisResult.isErr()) {
-      return err(topEmojisResult.error);
+    if (topResult.isErr()) {
+      return err(topResult.error);
     }
 
-    const topEmojis = topEmojisResult.value;
+    const top = topResult.value;
 
     const components = this.makeComponents(
-      topEmojis,
+      top,
       interaction.guild!,
-      targetUser,
       channel,
+      reactor,
+      reactee,
     );
 
-    return ok({ components });
+    return ok({ components, allowedMentions: { users: [] } });
   }
 
   private makeComponents(
     leaderboard: Array<{ count: number; emoji: string }>,
     guild: Guild,
-    user?: User,
     channel?: GuildBasedChannel | APIInteractionDataResolvedChannel,
+    reactor?: User,
+    reactee?: User,
   ) {
     const pad = leaderboard.length >= 10;
 
@@ -81,13 +91,13 @@ export class EmojiCommand implements ICommand {
 
     const section = new SectionBuilder().addTextDisplayComponents(
       new TextDisplayBuilder().setContent(
-        `## Top emojis${user ? ` from ${user.username}` : ""} in ${channel ? ` <#${channel.id}>` : guild.name}`,
+        `## Top reactions${reactee ? ` to <@${reactee.id}>'s messages` : reactor ? ` from <@${reactor.id}>` : ""} in ${channel ? ` <#${channel.id}>` : guild.name}`,
       ),
     );
 
     if (leaderboard.length === 0) {
       section.addTextDisplayComponents(
-        new TextDisplayBuilder().setContent(`No emojis recorded yet!`),
+        new TextDisplayBuilder().setContent(`No reactions recorded yet!`),
       );
     } else {
       const entries = [];
@@ -96,7 +106,7 @@ export class EmojiCommand implements ICommand {
         entries.push(
           `\` ${`#${index + 1}`.padStart(pad ? 3 : 2, " ")} \` ${
             emoji
-          } - **${count}** use${count !== 1 ? "s" : ""}`,
+          } - **${count}** reaction${count !== 1 ? "s" : ""}`,
         );
       }
 

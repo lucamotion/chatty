@@ -1,12 +1,13 @@
 /* v8 ignore start */
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc.js";
-import { Client, GatewayIntentBits } from "discord.js";
+import { Client, GatewayIntentBits, Partials } from "discord.js";
 import "dotenv/config";
 import { Bot } from "./bot.js";
 import { EmojiCommand } from "./commands/emoji.js";
 import { GraphCommand } from "./commands/graph.js";
 import { LeaderboardCommand } from "./commands/leaderboard.js";
+import { ReactionCommand } from "./commands/reaction.js";
 import { StatsCommand } from "./commands/stats.js";
 import {} from "./lib/charts.js";
 import { PrismaClientProvider } from "./structs/database.js";
@@ -17,7 +18,9 @@ const client = new Client({
     GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildMessages,
     GatewayIntentBits.MessageContent,
+    GatewayIntentBits.GuildMessageReactions,
   ],
+  partials: [Partials.Message, Partials.Channel, Partials.Reaction],
 });
 
 const prisma = new PrismaClientProvider();
@@ -30,6 +33,7 @@ const bot = new Bot(
     new LeaderboardCommand(userRepository),
     new GraphCommand(userRepository),
     new EmojiCommand(userRepository),
+    new ReactionCommand(userRepository),
   ],
   userRepository,
 );

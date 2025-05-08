@@ -59,7 +59,7 @@ export interface IUserRepository {
     period: "week" | "month" | "year" | "alltime",
   ): Promise<Result<Array<{ hour: number; counter: number }>, ChattyError>>;
 
-  trackEmojis(
+  trackEmoji(
     guildId: string,
     channelId: string,
     userId: string,
@@ -70,6 +70,20 @@ export interface IUserRepository {
     guildId: string,
     channelId?: string,
     userId?: string,
+  ): Promise<Result<Array<{ count: number; emoji: string }>, ChattyError>>;
+
+  trackReaction(
+    guildId: string,
+    channelId: string,
+    emoji: string,
+    reactorId: string,
+    reacteeId: string,
+  ): Promise<Result<void, ChattyError>>;
+  getTopReactions(
+    guildId: string,
+    channelId?: string,
+    reactorId?: string,
+    reacteeId?: string,
   ): Promise<Result<Array<{ count: number; emoji: string }>, ChattyError>>;
 }
 

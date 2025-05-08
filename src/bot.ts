@@ -1,4 +1,14 @@
-import { Client, Collection, Interaction, Message, Routes } from "discord.js";
+import {
+  Client,
+  Collection,
+  Interaction,
+  Message,
+  MessageReaction,
+  PartialMessageReaction,
+  PartialUser,
+  Routes,
+  User,
+} from "discord.js";
 import emojiRegex from "emoji-regex";
 import type { IBot, ICommand, IUserRepository } from "./types/interfaces.js";
 
@@ -28,9 +38,9 @@ export class Bot implements IBot {
     this.commandsCollection = commandsCollection;
 
     const wrapHandler =
-      <T extends Message | Interaction>(fn: (arg: T) => Promise<void>) =>
-      (arg: T) =>
-        fn(arg).catch(console.error);
+      <T extends Array<unknown>>(fn: (...args: T) => Promise<void>) =>
+      (...args: T) =>
+        fn(...args).catch(console.error);
 
     this.client.on("ready", () => console.log("Signed in"));
     this.client.on(
@@ -41,10 +51,19 @@ export class Bot implements IBot {
       "interactionCreate",
       wrapHandler(this.onInteractionCreate.bind(this)),
     );
+    this.client.on(
+      "messageReactionAdd",
+      wrapHandler(this.onReactionCreate.bind(this)),
+    );
   }
 
   async start() {
     await this.client.login(this.token);
+
+    // await this.client.rest.put(
+    //   Routes.applicationCommands(this.client.user!.id),
+    //   { body: this.commands.map((command) => command.data.toJSON()) },
+    // );
 
     await this.client.rest.put(
       Routes.applicationGuildCommands(
@@ -85,7 +104,7 @@ export class Bot implements IBot {
       }
 
       for (const [emoji, count] of emojiMap.entries()) {
-        await this.userRepository.trackEmojis(
+        await this.userRepository.trackEmoji(
           message.guild.id,
           message.channel.id,
           message.author.id,
@@ -110,7 +129,7 @@ export class Bot implements IBot {
       }
 
       for (const [emoji, count] of emojiMap.entries()) {
-        await this.userRepository.trackEmojis(
+        await this.userRepository.trackEmoji(
           message.guild.id,
           message.channel.id,
           message.author.id,
@@ -161,5 +180,33 @@ export class Bot implements IBot {
       flags: 1 << 15,
       allowedMentions: result.value.allowedMentions,
     });
+  }
+
+  async onReactionCreate(
+    reaction: MessageReaction | PartialMessageReaction,
+    user: User | PartialUser,
+  ) {
+    if (user.bot) {
+      return;
+    }
+
+    let message;
+
+    if (reaction.message.partial) {
+      message = await reaction.message.fetch();
+    } else {
+      message = reaction.message;
+    }
+
+    await this.userRepository.trackReaction(
+      message.guildId!,
+      message.channelId,
+      reaction.emoji.id === null
+        ? reaction.emoji.name!
+        : `<${reaction.emoji.animated ? "a" : ""}:${reaction.emoji.name}:${reaction.emoji.id}>`,
+      user.id,
+      message.author.id,
+    );
+    return;
   }
 }
