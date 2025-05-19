@@ -61,7 +61,7 @@ export class LeaderboardCommand implements ICommand {
     } else {
       const entries = [];
 
-      for (const [index, user] of leaderboard.entries()) {
+      for (const [index, user] of leaderboard.slice(0, 20).entries()) {
         entries.push(
           `\` ${`#${index + 1}`.padStart(pad ? 3 : 2, " ")} \` <@${
             user.userId
