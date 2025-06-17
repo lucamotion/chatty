@@ -24,6 +24,7 @@ RUN pnpm approve-builds
 
 COPY src ./src
 COPY tsconfig.json ./
+COPY default.ttf ./
 
 COPY prisma ./prisma
 RUN pnpm prisma generate

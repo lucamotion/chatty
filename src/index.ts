@@ -3,6 +3,7 @@ import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc.js";
 import { Client, GatewayIntentBits, Partials } from "discord.js";
 import "dotenv/config";
+import { FontLibrary } from "skia-canvas";
 import { Bot } from "./bot.js";
 import { EmojiCommand } from "./commands/emoji.js";
 import { GraphCommand } from "./commands/graph.js";
@@ -12,6 +13,8 @@ import { StatsCommand } from "./commands/stats.js";
 import {} from "./lib/charts.js";
 import { PrismaClientProvider } from "./structs/database.js";
 import { UserRepository } from "./structs/user-repository.js";
+
+FontLibrary.use("Arial", "./default.ttf");
 
 const client = new Client({
   intents: [
