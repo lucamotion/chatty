@@ -12,8 +12,7 @@
     "isolatedModules": true,
     "lib": ["ESNext", "DOM"],
     "experimentalDecorators": true,
-    "emitDecoratorMetadata": true,
-    "allowJs": true
+    "emitDecoratorMetadata": true
   },
   "include": ["src", "types/vitest.d.ts", "types/chart.js.d.ts", "*.test.ts"],
   "exclude": ["**/*.test.ts"]
