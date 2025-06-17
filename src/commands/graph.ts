@@ -1,3 +1,4 @@
+import { Canvas } from "canvas";
 import dayjs from "dayjs";
 import tz from "dayjs/plugin/timezone.js";
 import {
@@ -15,7 +16,6 @@ import {
   User,
 } from "discord.js";
 import { err, ok } from "neverthrow";
-import { Canvas } from "skia-canvas";
 import { Chart, ChartItem } from "../lib/charts.js";
 import type { ICommand, IUserRepository } from "../types/interfaces.js";
 
@@ -135,7 +135,7 @@ export class GraphCommand implements ICommand {
       timePeriod,
     );
 
-    const pngBuffer = await canvas.toBuffer("png", { matte: "white" });
+    const pngBuffer = canvas.toBuffer("image/png");
     chart.destroy();
 
     const components = this.makeComponents(
@@ -238,6 +238,7 @@ export class GraphCommand implements ICommand {
           },
         },
         plugins: {
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
           // @ts-ignore
           background: { backgroundColor: "hsl(200, 26%, 9%)" },
           legend: {

@@ -1,3 +1,4 @@
+import { CanvasRenderingContext2D } from "canvas";
 import {
   CategoryScale,
   Chart as ChartJS,
@@ -8,7 +9,6 @@ import {
   PointElement,
   Title,
 } from "chart.js";
-import { CanvasRenderingContext2D } from "skia-canvas";
 
 ChartJS.register([
   CategoryScale,
