@@ -35,5 +35,7 @@ services:
       - dbdata:/var/lib/postgresql/data
     environment:
       - POSTGRES_PASSWORD=admin
+volumes:
+  dbdata:
 networks:
   postgres:
