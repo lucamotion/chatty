@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "lint": "eslint ./src",
-    "build": "pnpm lint && rimraf ./dist && tsc -p ./tsconfig.json",
+    "build": "rimraf ./dist && tsc -p ./tsconfig.json",
     "start": "node dist/index.js",
     "test": "vitest run",
     "test:coverage": "yarn vitest run --coverage"
