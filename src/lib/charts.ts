@@ -27,7 +27,7 @@ const backgroundPlugin = {
     _args: unknown,
     options: { backgroundColor: string },
   ) => {
-    const ctx = chart.ctx as CanvasRenderingContext2D;
+    const ctx = chart.ctx as unknown as CanvasRenderingContext2D;
     ctx.save();
     ctx.fillStyle = options.backgroundColor || "white";
     ctx.fillRect(0, 0, chart.width, chart.height);

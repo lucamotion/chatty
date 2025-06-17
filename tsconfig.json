@@ -10,7 +10,7 @@
     "noErrorTruncation": true,
     "allowSyntheticDefaultImports": true,
     "isolatedModules": true,
-    "lib": ["ESNext"],
+    "lib": ["ESNext", "DOM"],
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true
   },

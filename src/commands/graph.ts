@@ -16,7 +16,7 @@ import {
 } from "discord.js";
 import { err, ok } from "neverthrow";
 import { Canvas } from "skia-canvas";
-import { Chart } from "../lib/charts.js";
+import { Chart, ChartItem } from "../lib/charts.js";
 import type { ICommand, IUserRepository } from "../types/interfaces.js";
 
 dayjs.extend(tz);
@@ -185,7 +185,7 @@ export class GraphCommand implements ICommand {
     timePeriod: "week" | "month" | "year" | "alltime",
   ) {
     const canvas = new Canvas(650, 200);
-    const chart = new Chart(canvas, {
+    const chart = new Chart(canvas as unknown as ChartItem, {
       type: "line",
       data: {
         labels: Array.from(Array(24).keys()).map(
