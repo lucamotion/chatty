@@ -13,7 +13,8 @@ cairo-dev \
 libpng-dev \
 g++ \
 pango-dev \
-python3 
+python3 \
+fontconfig
 
 COPY package.json ./
 COPY pnpm-lock.yaml ./
