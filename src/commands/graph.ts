@@ -238,6 +238,7 @@ export class GraphCommand implements ICommand {
           },
         },
         plugins: {
+          // @ts-ignore
           background: { backgroundColor: "hsl(200, 26%, 9%)" },
           legend: {
             display: true,
