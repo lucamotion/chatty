@@ -60,6 +60,19 @@ export class Bot implements IBot {
   async start() {
     await this.client.login(this.token);
 
+    while (true) {
+      await fetch(`https://top.gg/api/bots/:bot_id/stats`, {
+        method: "POST",
+        body: JSON.stringify({ server_count: this.client.guilds.cache.size }),
+        headers: {
+          Authorization:
+            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJib3QiOiJ0cnVlIiwiaWQiOiIxMzY2MTM2MTY5NDI3MTExOTM2IiwiaWF0IjoiMTc0NzcxMTE1OCJ9.yx94JMuZYaof1HsYn-t-jYinZ-aQaV6sZfNJYCMfwIo",
+        },
+      });
+
+      await new Promise((resolve) => setTimeout(resolve, 1000 * 60 * 60));
+    }
+
     // await this.client.rest.put(
     //   Routes.applicationCommands(this.client.user!.id),
     //   { body: this.commands.map((command) => command.data.toJSON()) },
